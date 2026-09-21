@@ -43,4 +43,4 @@ export default function JokesPage() {
         <h1 className="text-3xl font-bold mb-6">Jokes</h1>
         <div className="grid gap-4">
           {jokes.map((joke) => (
-              <div key={joke.id} className="p-4 border rounded-lg
+              <div key={joke.id} className="p-4 border
