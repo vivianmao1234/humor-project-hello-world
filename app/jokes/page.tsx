@@ -1,3 +1,4 @@
+cat > app/jokes/page.tsx << 'EOF'
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -36,4 +37,20 @@ export default function JokesPage() {
     fetchJokes();
   }, []);
 
-  if
+  if (loading) return <div className="p-8">Loading...</div>;
+
+  return (
+      <div className="p-8">
+        <h1 className="text-3xl font-bold mb-6">Jokes</h1>
+        <div className="grid gap-4">
+          {jokes.map((joke) => (
+              <div key={joke.id} className="p-4 border rounded-lg bg-blue-50">
+                <h2 className="text-lg font-semibold">{joke.title}</h2>
+                <p className="text-gray-600">{joke.description}</p>
+              </div>
+          ))}
+        </div>
+      </div>
+  );
+}
+EOF
