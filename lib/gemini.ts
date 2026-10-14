@@ -1,6 +1,9 @@
 // Server-only: reads GEMINI_API_KEY, which must never reach the browser.
 
-export const CAPTION_MODEL = 'gemini-2.5-flash';
+// Tried in order. Google retires model names for new keys and the free tier is often
+// overloaded (503), so a busy or unavailable model falls through to the next one.
+const CAPTION_MODELS = ['gemini-3.8-flash', 'gemini-flash-latest'];
+const RETRYABLE = new Set([404, 429, 500, 503]);
 
 export function buildCaptionPrompt(topic: string) {
   return [
@@ -14,31 +17,53 @@ export function buildCaptionPrompt(topic: string) {
   ].join('\n');
 }
 
-export async function generateCaptions(prompt: string): Promise<string[]> {
+async function callModel(model: string, prompt: string, apiKey: string) {
+  return fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: { responseMimeType: 'application/json', temperature: 1 },
+    }),
+    signal: AbortSignal.timeout(25_000),
+  });
+}
+
+// Returns the captions and the model that actually produced them (saved with each caption).
+export async function generateCaptions(prompt: string): Promise<{ captions: string[]; model: string }> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error('GEMINI_API_KEY is not set');
 
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${CAPTION_MODEL}:generateContent`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { responseMimeType: 'application/json', temperature: 1 },
-      }),
+  let lastError = '';
+  for (const model of CAPTION_MODELS) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      if (attempt > 0) await new Promise((r) => setTimeout(r, 1500));
+
+      let res: Response;
+      try {
+        res = await callModel(model, prompt, apiKey);
+      } catch (e) {
+        // A hung model won't do better on retry; move on to the next one.
+        lastError = `${model} → ${(e as Error).name === 'TimeoutError' ? 'timed out' : (e as Error).message}`;
+        break;
+      }
+      if (!res.ok) {
+        lastError = `${model} → ${res.status} ${(await res.text()).slice(0, 200)}`;
+        if (RETRYABLE.has(res.status)) continue;
+        throw new Error(`Gemini request failed: ${lastError}`);
+      }
+
+      const data = await res.json();
+      const text: string = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '[]';
+      const parsed: unknown = JSON.parse(text);
+      if (!Array.isArray(parsed)) throw new Error('Gemini returned an unexpected format');
+
+      const captions = parsed
+        .filter((c): c is string => typeof c === 'string' && c.trim().length > 0)
+        .map((c) => c.trim())
+        .slice(0, 3);
+      return { captions, model };
     }
-  );
-
-  if (!res.ok) throw new Error(`Gemini request failed (${res.status})`);
-
-  const data = await res.json();
-  const text: string = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '[]';
-  const parsed: unknown = JSON.parse(text);
-
-  if (!Array.isArray(parsed)) throw new Error('Gemini returned an unexpected format');
-  return parsed
-    .filter((c): c is string => typeof c === 'string' && c.trim().length > 0)
-    .map((c) => c.trim())
-    .slice(0, 3);
+  }
+  throw new Error(`All Gemini models failed. Last error: ${lastError}`);
 }

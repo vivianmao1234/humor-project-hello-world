@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { buildCaptionPrompt, generateCaptions, CAPTION_MODEL } from '@/lib/gemini';
+import { buildCaptionPrompt, generateCaptions } from '@/lib/gemini';
 
 export type GenerateState = { error?: string; captions?: string[] };
 
@@ -23,8 +23,9 @@ export async function generateAction(
   const prompt = buildCaptionPrompt(topic);
 
   let captions: string[];
+  let model: string;
   try {
-    captions = await generateCaptions(prompt);
+    ({ captions, model } = await generateCaptions(prompt));
   } catch (e) {
     console.error(e);
     return { error: 'The AI didn’t come through. Try again in a moment.' };
@@ -36,7 +37,7 @@ export async function generateAction(
       created_by: user.id,
       topic,
       prompt,
-      model: CAPTION_MODEL,
+      model,
       content,
     }))
   );
