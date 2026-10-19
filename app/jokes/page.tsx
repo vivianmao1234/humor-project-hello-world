@@ -1,12 +1,4 @@
-'use client';
-
-import { useEffect, useState } from 'react';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { createClient } from '@/lib/supabase/server';
 
 interface Joke {
   id: number;
@@ -15,40 +7,33 @@ interface Joke {
   created_at: string;
 }
 
-export default function JokesPage() {
-  const [jokes, setJokes] = useState<Joke[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchJokes() {
-      const { data, error } = await supabase
-          .from('jokes')
-          .select('*');
-
-      if (error) {
-        console.error('Error fetching jokes:', error);
-      } else {
-        setJokes(data || []);
-      }
-      setLoading(false);
-    }
-
-    fetchJokes();
-  }, []);
-
-  if (loading) return <div className="p-8">Loading...</div>;
+// Rendered on the server so the list is in the page as soon as it loads.
+export default async function JokesPage() {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from('jokes').select('*').order('id');
+  const jokes = (data ?? []) as Joke[];
 
   return (
-      <div className="p-8">
-        <h1 className="text-3xl font-bold mb-6">Jokes</h1>
-        <div className="grid gap-4">
+    <div className="mx-auto w-full max-w-2xl px-4 py-8">
+      <h1 className="text-3xl font-bold">Jokes</h1>
+      <p className="mb-6 text-zinc-500">Classic jokes, straight from the database.</p>
+
+      {error ? (
+        <p className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
+          Couldn’t load jokes right now. Please refresh in a moment.
+        </p>
+      ) : jokes.length === 0 ? (
+        <p className="rounded-2xl border border-dashed border-zinc-300 bg-white p-8 text-center text-zinc-500">No jokes yet.</p>
+      ) : (
+        <ul className="grid gap-3">
           {jokes.map((joke) => (
-              <div key={joke.id} className="p-4 border rounded-lg bg-blue-50">
-                <h2 className="text-lg font-semibold">{joke.title}</h2>
-                <p className="text-gray-600">{joke.description}</p>
-              </div>
+            <li key={joke.id} className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-zinc-200">
+              <p className="font-semibold">{joke.title}</p>
+              <p className="mt-1 text-zinc-600">{joke.description}</p>
+            </li>
           ))}
-        </div>
-      </div>
+        </ul>
+      )}
+    </div>
   );
 }

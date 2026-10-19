@@ -17,14 +17,17 @@ export default function GenerateForm() {
 
   return (
     <div className="flex flex-col gap-6">
-      <form action={formAction} className="flex flex-col gap-3">
+      <form action={formAction} className="flex flex-col gap-3 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200">
+        <label htmlFor="topic" className="text-sm font-medium">Your topic</label>
         <input
+          id="topic"
           name="topic"
           required
           maxLength={120}
           placeholder="e.g. Butler at 3am during midterms"
-          className="rounded-lg border px-4 py-3"
+          className="rounded-lg border border-zinc-300 bg-white px-4 py-3"
         />
+        <p className="text-xs text-zinc-500">Or tap one of these to generate right away:</p>
         <div className="flex flex-wrap gap-2">
           {IDEAS.map((idea) => (
             <button
@@ -45,14 +48,16 @@ export default function GenerateForm() {
           disabled={pending}
           className="rounded-full bg-blue-600 px-5 py-3 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
         >
-          {pending ? 'Writing jokes…' : 'Generate'}
+          {pending ? 'Writing jokes… (a few seconds)' : 'Generate'}
         </button>
       </form>
 
-      {state.error && <p className="text-red-600">{state.error}</p>}
+      {state.error && (
+        <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">{state.error}</p>
+      )}
 
       {state.captions && (
-        <div className="rounded-lg border bg-blue-50 p-4">
+        <div className="rounded-2xl border border-blue-200 bg-blue-50 p-5">
           <p className="mb-2 font-semibold">Posted to the feed:</p>
           <ul className="list-disc space-y-1 pl-5">
             {state.captions.map((c) => (
