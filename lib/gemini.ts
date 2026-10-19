@@ -23,7 +23,12 @@ async function callModel(model: string, prompt: string, apiKey: string) {
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
     body: JSON.stringify({
       contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { responseMimeType: 'application/json', temperature: 1 },
+      // Low thinking keeps responses around 2s instead of 6s+ (and avoids timeouts under load).
+      generationConfig: {
+        responseMimeType: 'application/json',
+        temperature: 1,
+        thinkingConfig: { thinkingLevel: 'low' },
+      },
     }),
     signal: AbortSignal.timeout(25_000),
   });
