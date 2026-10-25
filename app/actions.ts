@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { buildCaptionPrompt, generateCaptions } from '@/lib/gemini';
+import { runCaptionRequest } from '@/lib/pipeline';
 
 export type GenerateState = { error?: string; captions?: string[] };
 
@@ -20,30 +20,14 @@ export async function generateAction(
   if (!topic) return { error: 'Give it something to riff on.' };
   if (topic.length > 120) return { error: 'Keep the topic under 120 characters.' };
 
-  const prompt = buildCaptionPrompt(topic);
-
+  // Runs the prompt chains configured in the admin app and saves the captions.
   let captions: string[];
-  let model: string;
   try {
-    ({ captions, model } = await generateCaptions(prompt));
+    const result = await runCaptionRequest(supabase, user.id, topic);
+    captions = result.captions.map((c) => c.content);
   } catch (e) {
     console.error(e);
     return { error: 'The AI didn’t come through. Try again in a moment.' };
-  }
-  if (captions.length === 0) return { error: 'No captions came back. Try a different topic.' };
-
-  const { error } = await supabase.from('captions').insert(
-    captions.map((content) => ({
-      created_by: user.id,
-      topic,
-      prompt,
-      model,
-      content,
-    }))
-  );
-  if (error) {
-    console.error(error);
-    return { error: 'Couldn’t save your captions.' };
   }
 
   revalidatePath('/');

@@ -1,75 +1,57 @@
 // Server-only: reads GEMINI_API_KEY, which must never reach the browser.
 
-// Tried in order. Google retires model names for new keys and the free tier is often
-// overloaded (503), so a busy or unavailable model falls through to the next one.
-// The lite models are less in demand, so they often answer when the full ones don't.
-const CAPTION_MODELS = ['gemini-3.8-flash', 'gemini-flash-latest', 'gemini-flash-lite-latest', 'gemini-3.1-flash-lite'];
-const RETRYABLE = new Set([404, 429, 500, 503]);
+export type LlmCall = {
+  ok: boolean;
+  status: number | null;   // HTTP status, or null if the request never completed
+  text: string | null;     // the model's raw output
+  error: string | null;
+  durationMs: number;
+};
 
-export function buildCaptionPrompt(topic: string) {
-  return [
-    'You write short, funny captions for Columbia University students.',
-    'Audience: a Columbia College junior who is chronically online, grew up in the Midwest,',
-    'lives in the dorms, and explores New York City on weekends.',
-    'Use specific campus and NYC details (Butler, Low Steps, John Jay, the 1 train, bodegas, etc.) when they fit.',
-    'Keep each caption under 25 words. No hashtags, no emojis, nothing mean-spirited.',
-    `Write 3 different captions about: "${topic}".`,
-    'Return only a JSON array of 3 strings.',
-  ].join('\n');
-}
-
-async function callModel(model: string, prompt: string, apiKey: string) {
-  return fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      // Low thinking keeps responses around 2s instead of 6s+ (and avoids timeouts under load).
-      generationConfig: {
-        responseMimeType: 'application/json',
-        temperature: 1,
-        thinkingConfig: { thinkingLevel: 'low' },
-      },
-    }),
-    signal: AbortSignal.timeout(15_000),
-  });
-}
-
-// Returns the captions and the model that actually produced them (saved with each caption).
-export async function generateCaptions(prompt: string): Promise<{ captions: string[]; model: string }> {
+// One request to one Gemini model. Never throws: the result is logged either way.
+export async function callGemini(
+  model: string,
+  prompt: string,
+  { temperature = 1, json = false }: { temperature?: number; json?: boolean } = {}
+): Promise<LlmCall> {
   const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error('GEMINI_API_KEY is not set');
+  const started = Date.now();
+  if (!apiKey) return { ok: false, status: null, text: null, error: 'GEMINI_API_KEY is not set', durationMs: 0 };
 
-  let lastError = '';
-  for (const model of CAPTION_MODELS) {
-    for (let attempt = 0; attempt < 2; attempt++) {
-      if (attempt > 0) await new Promise((r) => setTimeout(r, 2000));
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature,
+          // Low thinking keeps responses around 2s instead of 6s+.
+          thinkingConfig: { thinkingLevel: 'low' },
+          ...(json ? { responseMimeType: 'application/json' } : {}),
+        },
+      }),
+      // The free tier sometimes hangs under load; give up and let the caller try another model.
+      signal: AbortSignal.timeout(15_000),
+    });
+    const durationMs = Date.now() - started;
 
-      let res: Response;
-      try {
-        res = await callModel(model, prompt, apiKey);
-      } catch (e) {
-        // A hung model won't do better on retry; move on to the next one.
-        lastError = `${model} → ${(e as Error).name === 'TimeoutError' ? 'timed out' : (e as Error).message}`;
-        break;
-      }
-      if (!res.ok) {
-        lastError = `${model} → ${res.status} ${(await res.text()).slice(0, 200)}`;
-        if (RETRYABLE.has(res.status)) continue;
-        throw new Error(`Gemini request failed: ${lastError}`);
-      }
-
-      const data = await res.json();
-      const text: string = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '[]';
-      const parsed: unknown = JSON.parse(text);
-      if (!Array.isArray(parsed)) throw new Error('Gemini returned an unexpected format');
-
-      const captions = parsed
-        .filter((c): c is string => typeof c === 'string' && c.trim().length > 0)
-        .map((c) => c.trim())
-        .slice(0, 3);
-      return { captions, model };
+    if (!res.ok) {
+      const body = (await res.text()).slice(0, 500);
+      return { ok: false, status: res.status, text: null, error: body || `HTTP ${res.status}`, durationMs };
     }
+    const data = await res.json();
+    const text: string | undefined = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) return { ok: false, status: res.status, text: null, error: 'Empty response', durationMs };
+    return { ok: true, status: res.status, text, error: null, durationMs };
+  } catch (e) {
+    const err = e as Error;
+    return {
+      ok: false,
+      status: null,
+      text: null,
+      error: err.name === 'TimeoutError' ? 'Timed out after 15s' : err.message,
+      durationMs: Date.now() - started,
+    };
   }
-  throw new Error(`All Gemini models failed. Last error: ${lastError}`);
 }

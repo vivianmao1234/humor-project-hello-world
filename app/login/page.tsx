@@ -1,28 +1,26 @@
-'use client';
+import LoginButton from './login-button';
 
-import { createClient } from '@/lib/supabase/client';
+const ERRORS: Record<string, string> = {
+  not_allowed: 'Sign-ups are limited to Columbia and Barnard email addresses. Try your school Google account.',
+  auth: 'Sign-in didn’t finish. Please try again.',
+};
 
-export default function LoginPage() {
-  const supabase = createClient();
-
-  async function signInWithGoogle() {
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-  }
+export default async function LoginPage({ searchParams }: PageProps<'/login'>) {
+  const { error } = await searchParams;
+  const message = typeof error === 'string' ? ERRORS[error] : undefined;
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-6 p-8">
-      <h1 className="text-2xl font-bold">Sign in</h1>
-      <button
-        onClick={signInWithGoogle}
-        className="rounded-full bg-black px-6 py-3 text-white hover:bg-zinc-800"
-      >
-        Continue with Google
-      </button>
+      <div className="text-center">
+        <h1 className="text-2xl font-bold">Sign in</h1>
+        <p className="mt-1 text-sm text-zinc-500">Use your Columbia or Barnard Google account.</p>
+      </div>
+      {message && (
+        <p className="max-w-sm rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-center text-sm text-amber-900">
+          {message}
+        </p>
+      )}
+      <LoginButton />
     </div>
   );
 }

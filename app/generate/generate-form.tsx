@@ -48,7 +48,7 @@ export default function GenerateForm() {
           disabled={pending}
           className="rounded-full bg-blue-600 px-5 py-3 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
         >
-          {pending ? 'Writing jokes… (a few seconds)' : 'Generate'}
+          {pending ? 'Writing jokes… (can take up to a minute)' : 'Generate'}
         </button>
       </form>
 

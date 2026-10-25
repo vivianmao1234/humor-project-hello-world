@@ -8,8 +8,14 @@ export async function GET(request: Request) {
 
   if (code) {
     const supabase = await createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
+      // Only emails on an allowed domain (admin app → Signup domains) or the whitelist may sign in.
+      const { data: allowed } = await supabase.rpc('is_signup_allowed', { check_email: data.user.email ?? '' });
+      if (!allowed) {
+        await supabase.auth.signOut();
+        return NextResponse.redirect(`${origin}/login?error=not_allowed`);
+      }
       return NextResponse.redirect(`${origin}${next}`);
     }
   }
