@@ -2,7 +2,8 @@
 
 // Tried in order. Google retires model names for new keys and the free tier is often
 // overloaded (503), so a busy or unavailable model falls through to the next one.
-const CAPTION_MODELS = ['gemini-3.8-flash', 'gemini-flash-latest'];
+// The lite models are less in demand, so they often answer when the full ones don't.
+const CAPTION_MODELS = ['gemini-3.8-flash', 'gemini-flash-latest', 'gemini-flash-lite-latest', 'gemini-3.1-flash-lite'];
 const RETRYABLE = new Set([404, 429, 500, 503]);
 
 export function buildCaptionPrompt(topic: string) {
@@ -30,7 +31,7 @@ async function callModel(model: string, prompt: string, apiKey: string) {
         thinkingConfig: { thinkingLevel: 'low' },
       },
     }),
-    signal: AbortSignal.timeout(25_000),
+    signal: AbortSignal.timeout(15_000),
   });
 }
 
@@ -42,7 +43,7 @@ export async function generateCaptions(prompt: string): Promise<{ captions: stri
   let lastError = '';
   for (const model of CAPTION_MODELS) {
     for (let attempt = 0; attempt < 2; attempt++) {
-      if (attempt > 0) await new Promise((r) => setTimeout(r, 1500));
+      if (attempt > 0) await new Promise((r) => setTimeout(r, 2000));
 
       let res: Response;
       try {
