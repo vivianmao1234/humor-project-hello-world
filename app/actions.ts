@@ -31,6 +31,7 @@ export async function generateAction(
   }
 
   revalidatePath('/');
+  revalidatePath('/jokes');
   return { captions };
 }
 
@@ -58,6 +59,21 @@ export async function voteAction(captionId: number, vote: 1 | -1) {
   }
 
   revalidatePath('/');
+  revalidatePath('/jokes');
+}
+
+// Stars or un-stars a caption for the signed-in user.
+export async function favoriteAction(captionId: number, save: boolean) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect('/login');
+
+  if (save) {
+    await supabase.from('caption_favorites').insert({ caption_id: captionId, user_id: user.id });
+  } else {
+    await supabase.from('caption_favorites').delete().eq('caption_id', captionId).eq('user_id', user.id);
+  }
+  revalidatePath('/jokes');
 }
 
 export async function signOutAction() {

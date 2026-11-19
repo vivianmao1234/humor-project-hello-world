@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
-const PROTECTED_PATHS = ['/profile', '/generate'];
+const PROTECTED_PATHS = ['/profile'];
 
 export async function proxy(request: NextRequest) {
   // If Supabase falls back to the Site URL, the OAuth code lands on a page instead of

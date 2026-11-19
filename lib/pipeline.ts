@@ -18,7 +18,8 @@ type MixRow = { caption_count: number; humor_flavors: { id: number; slug: string
 
 export type GeneratedCaption = { content: string; flavor: string };
 
-const MAX_MODEL_ATTEMPTS_PER_STEP = 3;
+// Two tries per step keeps the worst-case wait short when Gemini is busy.
+const MAX_MODEL_ATTEMPTS_PER_STEP = 2;
 
 function fill(template: string, vars: Record<string, string>) {
   return template.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] ?? '');

@@ -14,9 +14,9 @@ export default async function Nav() {
   return (
     <header className="sticky top-0 z-10 border-b border-zinc-200 bg-white/90 backdrop-blur">
       <nav className="mx-auto flex w-full max-w-2xl items-center gap-4 px-4 py-3 text-sm">
-        <Link href="/" className="font-bold">🦁 Lion Laughs</Link>
+        <Link href="/" className="whitespace-nowrap font-bold">🦁 Lion Laughs</Link>
         <Link href="/jokes" className="text-zinc-600 hover:text-black">Jokes</Link>
-        {user && <Link href="/generate" className="text-zinc-600 hover:text-black">Generate</Link>}
+        {user && <Link href="/jokes?sort=favorites" className="text-zinc-600 hover:text-black">⭐ Favorites</Link>}
         <div className="ml-auto flex items-center gap-3">
           {user ? (
             <>
@@ -36,7 +36,7 @@ export default async function Nav() {
               </form>
             </>
           ) : (
-            <Link href="/login" className="rounded-full bg-zinc-900 px-4 py-1.5 font-medium text-white hover:bg-zinc-700">
+            <Link href="/login" className="whitespace-nowrap rounded-full bg-zinc-900 px-4 py-1.5 font-medium text-white hover:bg-zinc-700">
               Sign in
             </Link>
           )}

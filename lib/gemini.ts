@@ -32,7 +32,7 @@ export async function callGemini(
         },
       }),
       // The free tier sometimes hangs under load; give up and let the caller try another model.
-      signal: AbortSignal.timeout(15_000),
+      signal: AbortSignal.timeout(10_000),
     });
     const durationMs = Date.now() - started;
 
@@ -50,7 +50,7 @@ export async function callGemini(
       ok: false,
       status: null,
       text: null,
-      error: err.name === 'TimeoutError' ? 'Timed out after 15s' : err.message,
+      error: err.name === 'TimeoutError' ? 'Timed out after 10s' : err.message,
       durationMs: Date.now() - started,
     };
   }
