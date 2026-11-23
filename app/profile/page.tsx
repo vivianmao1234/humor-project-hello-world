@@ -18,7 +18,7 @@ export default async function ProfilePage() {
 
   return (
     <main className="flex flex-1 flex-col items-center px-5 py-12">
-      <h1 className="mb-8 font-display text-5xl text-ink">Your <span className="italic text-navy">profile</span></h1>
+      <h1 className="mb-8 font-display text-5xl font-bold tracking-tight text-ink">Your <span className="text-navy">profile</span></h1>
       <ProfileForm
         userId={user.id}
         email={user.email ?? ''}

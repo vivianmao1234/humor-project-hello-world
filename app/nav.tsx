@@ -16,8 +16,8 @@ export default async function Nav() {
   return (
     <header className="sticky top-0 z-20 border-b border-line bg-paper/85 backdrop-blur">
       <nav className="mx-auto flex w-full max-w-5xl items-center gap-6 px-5 py-3 text-sm">
-        <Link href="/" className="whitespace-nowrap font-display text-2xl leading-none text-ink">
-          Lion <span className="italic text-navy">Laughs</span>
+        <Link href="/" className="whitespace-nowrap font-display text-2xl font-bold tracking-tight leading-none text-ink">
+          Lion <span className="text-navy">Laughs</span>
         </Link>
         <Link href="/jokes" className={link}>Jokes</Link>
         {user && <Link href="/jokes?sort=favorites" className={link}>Favorites</Link>}

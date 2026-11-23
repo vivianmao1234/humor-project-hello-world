@@ -16,20 +16,20 @@ export default async function LoginPage({ searchParams }: PageProps<'/login'>) {
       <div className="grid w-full max-w-4xl overflow-hidden rounded-[2rem] bg-white shadow-2xl ring-1 ring-line md:grid-cols-2">
         <div className="relative hidden flex-col justify-between overflow-hidden bg-navy p-10 text-paper md:flex">
           <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-sky/30 blur-3xl" />
-          <p className="relative font-display text-3xl leading-none">
-            Lion <span className="italic text-sky">Laughs</span>
+          <p className="relative font-display text-3xl font-bold tracking-tight leading-none">
+            Lion <span className="text-sky">Laughs</span>
           </p>
           <figure className="relative">
-            <blockquote className="font-display text-3xl italic leading-snug">
-              “Me watching the 1 train blow past 116th like it has personal beef with my 8:40 AM.”
+            <blockquote className="text-2xl font-medium leading-snug">
+              “John Jay orange juice is structurally indistinguishable from industrial paint thinner.”
             </blockquote>
             <figcaption className="mt-4 text-sm text-sky">▲ Top-voted this week</figcaption>
           </figure>
         </div>
 
         <div className="flex flex-col justify-center p-10">
-          <h1 className="font-display text-5xl leading-none text-ink">
-            Welcome <span className="italic text-navy">back.</span>
+          <h1 className="font-display text-5xl font-bold tracking-tight leading-none text-ink">
+            Welcome <span className="text-navy">back.</span>
           </h1>
           <p className="mt-3 text-ink/60">Sign in with your Columbia or Barnard Google account to make captions, vote and save favorites.</p>
 

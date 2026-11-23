@@ -96,8 +96,8 @@ export default function GenerateForm() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between">
-              <h2 id="fresh-title" className="font-display text-4xl text-ink">
-                Fresh <span className="italic text-navy">captions</span>
+              <h2 id="fresh-title" className="font-display text-4xl font-bold tracking-tight text-ink">
+                Fresh <span className="text-navy">captions</span>
               </h2>
               <button onClick={close} aria-label="Close" className="rounded-full px-2 text-2xl leading-none text-ink/40 hover:text-ink">
                 ×

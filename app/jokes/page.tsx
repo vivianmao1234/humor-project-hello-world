@@ -68,7 +68,7 @@ export default async function JokesPage({ searchParams }: PageProps<'/jokes'>) {
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-5 py-12">
-      <h1 className="font-display text-6xl leading-none text-ink">The <span className="italic text-navy">Jokes</span></h1>
+      <h1 className="font-display text-6xl font-bold tracking-tight leading-none text-ink">The <span className="text-navy">Jokes</span></h1>
       <p className="mb-8 mt-3 text-ink/60">
         {user ? 'Vote on what’s funny and star the ones you love.' : (
           <><Link href="/login" className="font-medium text-navy underline">Sign in</Link> to vote and save favorites.</>
@@ -111,7 +111,7 @@ export default async function JokesPage({ searchParams }: PageProps<'/jokes'>) {
       ) : captions.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-line bg-white p-12 text-center">
           <p className="text-4xl">{view === 'favorites' ? '⭐' : '🦁'}</p>
-          <p className="mt-2 font-display text-2xl">{view === 'favorites' ? 'No favorites yet' : 'No captions yet'}</p>
+          <p className="mt-2 font-display text-2xl font-bold tracking-tight">{view === 'favorites' ? 'No favorites yet' : 'No captions yet'}</p>
           <p className="text-sm text-ink/55">
             {view === 'favorites' ? 'Tap the ☆ on any caption to save it here.' : 'Make the first ones on the home page.'}
           </p>
@@ -122,7 +122,7 @@ export default async function JokesPage({ searchParams }: PageProps<'/jokes'>) {
             <li key={c.id} className="flex gap-4 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-line transition hover:shadow-md">
               <VoteButtons captionId={c.id} score={c.score} myVote={c.myVote} loggedIn={!!user} />
               <div className="flex-1">
-                <p className="font-display text-2xl leading-snug text-ink">
+                <p className="text-lg font-medium leading-relaxed text-ink">
                   {view === 'top' && c.score > 0 && i < 3 && <span className="mr-1">{MEDALS[i]}</span>}
                   {c.content}
                 </p>
