@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { runCaptionRequest } from '@/lib/pipeline';
 
-export type GenerateState = { error?: string; captions?: string[] };
+export type GenerateState = { error?: string; captions?: { id: number; content: string }[] };
 
 export async function generateAction(
   _prev: GenerateState,
@@ -21,10 +21,10 @@ export async function generateAction(
   if (topic.length > 120) return { error: 'Keep the topic under 120 characters.' };
 
   // Runs the prompt chains configured in the admin app and saves the captions.
-  let captions: string[];
+  let captions: { id: number; content: string }[];
   try {
     const result = await runCaptionRequest(supabase, user.id, topic);
-    captions = result.captions.map((c) => c.content);
+    captions = result.captions.map((c) => ({ id: c.id, content: c.content }));
   } catch (e) {
     console.error(e);
     return { error: 'The AI didn’t come through. Try again in a moment.' };

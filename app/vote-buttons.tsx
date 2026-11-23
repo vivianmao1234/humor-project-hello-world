@@ -34,16 +34,16 @@ export default function VoteButtons({ captionId, score, myVote, loggedIn }: Vote
         onClick={() => vote(1)}
         aria-label="Upvote"
         title={loggedIn ? 'Upvote' : 'Sign in to vote'}
-        className={`rounded px-2 py-1 hover:bg-zinc-100 ${optimistic.myVote === 1 ? 'text-orange-600' : 'text-zinc-400'}`}
+        className={`rounded-full px-2 py-1 hover:bg-mist ${optimistic.myVote === 1 ? 'text-navy' : 'text-ink/30'}`}
       >
         ▲
       </button>
-      <span className="font-semibold tabular-nums">{optimistic.score}</span>
+      <span className="font-semibold tabular-nums text-ink">{optimistic.score}</span>
       <button
         onClick={() => vote(-1)}
         aria-label="Downvote"
         title={loggedIn ? 'Downvote' : 'Sign in to vote'}
-        className={`rounded px-2 py-1 hover:bg-zinc-100 ${optimistic.myVote === -1 ? 'text-blue-600' : 'text-zinc-400'}`}
+        className={`rounded-full px-2 py-1 hover:bg-mist ${optimistic.myVote === -1 ? 'text-red-700' : 'text-ink/30'}`}
       >
         ▼
       </button>

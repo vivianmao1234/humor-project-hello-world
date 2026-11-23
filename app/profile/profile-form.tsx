@@ -71,7 +71,7 @@ export default function ProfileForm({
 
   return (
     <form onSubmit={handleSave} className="flex w-full max-w-sm flex-col gap-4">
-      <p className="text-sm text-zinc-500">{email}</p>
+      <p className="text-sm text-ink/55">{email}</p>
 
       {avatarUrl && (
         // eslint-disable-next-line @next/next/no-img-element
@@ -85,7 +85,7 @@ export default function ProfileForm({
       <label className="flex flex-col gap-1">
         First name
         <input
-          className="rounded border px-3 py-2"
+          className="rounded-xl border border-line bg-white px-3 py-2"
           value={firstName}
           onChange={(e) => setFirstName(e.target.value)}
         />
@@ -94,7 +94,7 @@ export default function ProfileForm({
       <label className="flex flex-col gap-1">
         Last name
         <input
-          className="rounded border px-3 py-2"
+          className="rounded-xl border border-line bg-white px-3 py-2"
           value={lastName}
           onChange={(e) => setLastName(e.target.value)}
         />
@@ -112,7 +112,7 @@ export default function ProfileForm({
       <button
         type="submit"
         disabled={saving}
-        className="rounded-full bg-black px-5 py-2 text-white disabled:opacity-50"
+        className="rounded-full bg-ink px-5 py-2.5 font-medium text-paper hover:bg-navy disabled:opacity-50"
       >
         {saving ? 'Saving...' : 'Save'}
       </button>

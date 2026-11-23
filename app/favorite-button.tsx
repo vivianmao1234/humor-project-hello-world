@@ -25,7 +25,7 @@ export default function FavoriteButton({ captionId, saved, loggedIn }: { caption
       onClick={toggle}
       aria-label={optimistic ? 'Remove from favorites' : 'Save to favorites'}
       title={loggedIn ? (optimistic ? 'Remove from favorites' : 'Save to favorites') : 'Sign in to save favorites'}
-      className={`self-start rounded px-1 text-2xl leading-none hover:bg-zinc-100 ${optimistic ? 'text-amber-400' : 'text-zinc-300'}`}
+      className={`self-start rounded-full px-1.5 text-2xl leading-none hover:bg-mist ${optimistic ? 'text-gold' : 'text-ink/25 hover:text-gold'}`}
     >
       {optimistic ? '★' : '☆'}
     </button>

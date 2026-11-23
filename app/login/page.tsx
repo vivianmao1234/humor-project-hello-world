@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import LoginButton from './login-button';
 
 const ERRORS: Record<string, string> = {
@@ -5,29 +6,44 @@ const ERRORS: Record<string, string> = {
   auth: 'Sign-in didn’t finish. Please try again.',
 };
 
+// Same palette as the rest of the app: navy panel with a caption, sign-in on paper.
 export default async function LoginPage({ searchParams }: PageProps<'/login'>) {
   const { error } = await searchParams;
   const message = typeof error === 'string' ? ERRORS[error] : undefined;
 
   return (
-    <div className="flex flex-1 items-center justify-center bg-gradient-to-br from-blue-600 via-indigo-600 to-sky-500 p-6">
-      <div className="w-full max-w-sm rounded-3xl bg-white p-8 text-center shadow-xl">
-        <p className="text-5xl">🦁</p>
-        <h1 className="mt-2 text-2xl font-bold">Welcome to Lion Laughs</h1>
-        <p className="mt-1 text-sm text-zinc-500">Sign in with your Columbia or Barnard Google account.</p>
+    <main className="flex flex-1 items-center justify-center px-5 py-12">
+      <div className="grid w-full max-w-4xl overflow-hidden rounded-[2rem] bg-white shadow-2xl ring-1 ring-line md:grid-cols-2">
+        <div className="relative hidden flex-col justify-between overflow-hidden bg-navy p-10 text-paper md:flex">
+          <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-sky/30 blur-3xl" />
+          <p className="relative font-display text-3xl leading-none">
+            Lion <span className="italic text-sky">Laughs</span>
+          </p>
+          <figure className="relative">
+            <blockquote className="font-display text-3xl italic leading-snug">
+              “Me watching the 1 train blow past 116th like it has personal beef with my 8:40 AM.”
+            </blockquote>
+            <figcaption className="mt-4 text-sm text-sky">▲ Top-voted this week</figcaption>
+          </figure>
+        </div>
 
-        <figure className="my-6 rounded-2xl bg-blue-50 p-4 text-left">
-          <blockquote className="text-sm leading-snug text-zinc-800">
-            “Me watching the 1 train blow past 116th like it has personal beef with my 8:40 AM in Hamilton.”
-          </blockquote>
-          <figcaption className="mt-2 text-xs text-blue-700">▲ Voted up by Columbia students</figcaption>
-        </figure>
+        <div className="flex flex-col justify-center p-10">
+          <h1 className="font-display text-5xl leading-none text-ink">
+            Welcome <span className="italic text-navy">back.</span>
+          </h1>
+          <p className="mt-3 text-ink/60">Sign in with your Columbia or Barnard Google account to make captions, vote and save favorites.</p>
 
-        {message && (
-          <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">{message}</p>
-        )}
-        <LoginButton />
+          {message && (
+            <p className="mt-6 rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-900 ring-1 ring-amber-200">{message}</p>
+          )}
+          <div className="mt-8">
+            <LoginButton />
+          </div>
+          <Link href="/jokes" className="mt-4 text-center text-sm text-ink/50 hover:text-ink">
+            Or just browse the jokes →
+          </Link>
+        </div>
       </div>
-    </div>
+    </main>
   );
 }

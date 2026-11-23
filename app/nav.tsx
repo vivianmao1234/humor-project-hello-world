@@ -11,32 +11,35 @@ export default async function Nav() {
     : { data: null };
   const initial = (profile?.first_name || user?.email || '?').slice(0, 1).toUpperCase();
 
+  const link = 'whitespace-nowrap text-ink/60 hover:text-ink';
+
   return (
-    <header className="sticky top-0 z-10 border-b border-zinc-200 bg-white/90 backdrop-blur">
-      <nav className="mx-auto flex w-full max-w-2xl items-center gap-4 px-4 py-3 text-sm">
-        <Link href="/" className="whitespace-nowrap font-bold">🦁 Lion Laughs</Link>
-        <Link href="/jokes" className="text-zinc-600 hover:text-black">Jokes</Link>
-        {user && <Link href="/jokes?sort=favorites" className="text-zinc-600 hover:text-black">⭐ Favorites</Link>}
-        <div className="ml-auto flex items-center gap-3">
+    <header className="sticky top-0 z-20 border-b border-line bg-paper/85 backdrop-blur">
+      <nav className="mx-auto flex w-full max-w-5xl items-center gap-6 px-5 py-3 text-sm">
+        <Link href="/" className="whitespace-nowrap font-display text-2xl leading-none text-ink">
+          Lion <span className="italic text-navy">Laughs</span>
+        </Link>
+        <Link href="/jokes" className={link}>Jokes</Link>
+        {user && <Link href="/jokes?sort=favorites" className={link}>Favorites</Link>}
+        <div className="ml-auto flex items-center gap-4">
           {user ? (
             <>
-              <Link href="/profile" title="Your profile" className="flex items-center gap-2 text-zinc-600 hover:text-black">
+              <Link href="/profile" title="Your profile" className={`flex items-center gap-2 ${link}`}>
                 {profile?.avatar_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={profile.avatar_url} alt="" className="h-7 w-7 rounded-full object-cover" />
+                  <img src={profile.avatar_url} alt="" className="h-8 w-8 rounded-full object-cover ring-2 ring-white" />
                 ) : (
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-100 text-xs font-semibold text-blue-700">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-navy text-xs font-semibold text-white">
                     {initial}
                   </span>
                 )}
-                <span className="hidden sm:inline">Profile</span>
               </Link>
               <form action={signOutAction}>
-                <button className="text-zinc-500 hover:text-black">Sign out</button>
+                <button className={link}>Sign out</button>
               </form>
             </>
           ) : (
-            <Link href="/login" className="whitespace-nowrap rounded-full bg-zinc-900 px-4 py-1.5 font-medium text-white hover:bg-zinc-700">
+            <Link href="/login" className="whitespace-nowrap rounded-full bg-ink px-4 py-2 font-medium text-paper hover:bg-navy">
               Sign in
             </Link>
           )}

@@ -16,7 +16,7 @@ type Step = {
 };
 type MixRow = { caption_count: number; humor_flavors: { id: number; slug: string } | null };
 
-export type GeneratedCaption = { content: string; flavor: string };
+export type GeneratedCaption = { id: number; content: string; flavor: string };
 
 // Two tries per step keeps the worst-case wait short when Gemini is busy.
 const MAX_MODEL_ATTEMPTS_PER_STEP = 2;
@@ -172,7 +172,7 @@ async function runFlavor(
   }
   if (contents.length === 0) return [];
 
-  const { error } = await supabase.from('captions').insert(
+  const { data: saved, error } = await supabase.from('captions').insert(
     contents.map((content) => ({
       created_by: userId,
       topic,
@@ -183,7 +183,7 @@ async function runFlavor(
       humor_flavor_id: flavor.id,
       llm_prompt_chain_id: chainId,
     }))
-  );
+  ).select('id, content');
   if (error) throw new Error(`Couldn’t save captions: ${error.message}`);
-  return contents.map((content) => ({ content, flavor: flavor.slug }));
+  return (saved ?? []).map((c) => ({ id: c.id, content: c.content, flavor: flavor.slug }));
 }

@@ -17,8 +17,8 @@ export default async function ProfilePage() {
     .single();
 
   return (
-    <div className="flex flex-1 flex-col items-center p-8">
-      <h1 className="mb-6 text-2xl font-bold">Your Profile</h1>
+    <main className="flex flex-1 flex-col items-center px-5 py-12">
+      <h1 className="mb-8 font-display text-5xl text-ink">Your <span className="italic text-navy">profile</span></h1>
       <ProfileForm
         userId={user.id}
         email={user.email ?? ''}
@@ -26,6 +26,6 @@ export default async function ProfilePage() {
         initialLastName={profile?.last_name ?? ''}
         initialAvatarUrl={profile?.avatar_url ?? ''}
       />
-    </div>
+    </main>
   );
 }

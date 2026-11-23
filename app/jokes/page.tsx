@@ -67,11 +67,11 @@ export default async function JokesPage({ searchParams }: PageProps<'/jokes'>) {
   ];
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-8">
-      <h1 className="text-3xl font-bold">Jokes</h1>
-      <p className="mb-5 text-zinc-500">
+    <main className="mx-auto w-full max-w-3xl flex-1 px-5 py-12">
+      <h1 className="font-display text-6xl leading-none text-ink">The <span className="italic text-navy">Jokes</span></h1>
+      <p className="mb-8 mt-3 text-ink/60">
         {user ? 'Vote on what’s funny and star the ones you love.' : (
-          <><Link href="/login" className="font-medium text-blue-700 underline">Sign in</Link> to vote and save favorites.</>
+          <><Link href="/login" className="font-medium text-navy underline">Sign in</Link> to vote and save favorites.</>
         )}
       </p>
 
@@ -80,8 +80,8 @@ export default async function JokesPage({ searchParams }: PageProps<'/jokes'>) {
           <Link
             key={t.key}
             href={href(t.key, topicFilter)}
-            className={`rounded-full px-3 py-1 font-medium ${
-              view === t.key ? 'bg-zinc-900 text-white' : 'bg-white text-zinc-700 ring-1 ring-zinc-200 hover:bg-zinc-100'
+            className={`rounded-full px-4 py-1.5 font-medium ${
+              view === t.key ? 'bg-ink text-paper' : 'bg-white text-ink/70 ring-1 ring-line hover:text-ink'
             }`}
           >
             {t.label}
@@ -95,7 +95,7 @@ export default async function JokesPage({ searchParams }: PageProps<'/jokes'>) {
               key={t}
               href={href(view, topicFilter === t ? '' : t)}
               className={`max-w-56 truncate rounded-full px-3 py-1 ${
-                topicFilter === t ? 'bg-blue-600 text-white' : 'bg-white text-zinc-600 ring-1 ring-zinc-200 hover:bg-zinc-100'
+                topicFilter === t ? 'bg-navy text-paper' : 'bg-mist/70 text-navy hover:bg-mist'
               }`}
             >
               {t}
@@ -105,29 +105,29 @@ export default async function JokesPage({ searchParams }: PageProps<'/jokes'>) {
       )}
 
       {error ? (
-        <p className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
+        <p className="rounded-2xl bg-red-50 p-4 text-red-800 ring-1 ring-red-200">
           Couldn’t load captions right now. Please refresh in a moment.
         </p>
       ) : captions.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-zinc-300 bg-white p-10 text-center">
+        <div className="rounded-3xl border border-dashed border-line bg-white p-12 text-center">
           <p className="text-4xl">{view === 'favorites' ? '⭐' : '🦁'}</p>
-          <p className="mt-2 font-medium">{view === 'favorites' ? 'No favorites yet' : 'No captions yet'}</p>
-          <p className="text-sm text-zinc-500">
+          <p className="mt-2 font-display text-2xl">{view === 'favorites' ? 'No favorites yet' : 'No captions yet'}</p>
+          <p className="text-sm text-ink/55">
             {view === 'favorites' ? 'Tap the ☆ on any caption to save it here.' : 'Make the first ones on the home page.'}
           </p>
         </div>
       ) : (
         <ul className="flex flex-col gap-3">
           {captions.map((c, i) => (
-            <li key={c.id} className="flex gap-4 rounded-xl bg-white p-4 shadow-sm ring-1 ring-zinc-200">
+            <li key={c.id} className="flex gap-4 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-line transition hover:shadow-md">
               <VoteButtons captionId={c.id} score={c.score} myVote={c.myVote} loggedIn={!!user} />
               <div className="flex-1">
-                <p className="text-lg leading-snug">
+                <p className="font-display text-2xl leading-snug text-ink">
                   {view === 'top' && c.score > 0 && i < 3 && <span className="mr-1">{MEDALS[i]}</span>}
                   {c.content}
                 </p>
-                <p className="mt-2 text-xs text-zinc-500">
-                  <Link href={href(view, c.topic)} className="rounded bg-zinc-100 px-1.5 py-0.5 hover:bg-zinc-200">
+                <p className="mt-3 text-xs text-ink/50">
+                  <Link href={href(view, c.topic)} className="rounded-full bg-mist px-2.5 py-1 text-navy hover:bg-sky/40">
                     {c.topic}
                   </Link>
                   <span className="mx-1.5">·</span>
@@ -139,6 +139,6 @@ export default async function JokesPage({ searchParams }: PageProps<'/jokes'>) {
           ))}
         </ul>
       )}
-    </div>
+    </main>
   );
 }

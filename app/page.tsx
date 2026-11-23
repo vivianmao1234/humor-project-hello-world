@@ -6,81 +6,81 @@ import GenerateForm from './generate-form';
 export const maxDuration = 120;
 
 const STEPS = [
-  { icon: '✍️', title: 'Pick a moment', text: 'Name something every Columbia student gets.' },
-  { icon: '🗳️', title: 'Vote', text: 'The funniest captions rise to the top.' },
-  { icon: '⭐', title: 'Save favorites', text: 'Star the ones you want to keep.' },
+  { n: '01', title: 'Pick a moment', text: 'Something every Columbia student gets.' },
+  { n: '02', title: 'Get captions', text: 'The AI writes a few takes in seconds.' },
+  { n: '03', title: 'Vote & save', text: 'The best rise in Jokes. Star your favorites.' },
 ];
 
-type Row = { id: number; topic: string; content: string; caption_votes: { vote: number }[] };
-
-// A simple landing page: what the app is, the generator right under it, and a peek at the top captions.
+// Landing page: what the app is, and the caption generator front and center.
 export default async function Home() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const { data } = await supabase
-    .from('captions')
-    .select('id, topic, content, caption_votes(vote)')
-    .order('created_at', { ascending: false })
-    .limit(200);
-  const top = ((data ?? []) as Row[])
-    .map((c) => ({ ...c, score: c.caption_votes.reduce((sum, v) => sum + v.vote, 0) }))
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 3);
-
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-8">
-      <section className="rounded-3xl bg-gradient-to-br from-blue-600 to-indigo-700 p-8 text-center text-white shadow-sm">
-        <p className="text-5xl">🦁</p>
-        <h1 className="mt-2 text-4xl font-bold">Lion Laughs</h1>
-        <p className="mx-auto mt-2 max-w-md text-blue-100">AI jokes about Columbia life. You decide what’s funny.</p>
-      </section>
+    <main className="flex-1">
+      <section className="relative overflow-hidden">
+        {/* Soft Columbia-blue glow behind the hero */}
+        <div className="pointer-events-none absolute -top-40 left-1/2 h-[520px] w-[820px] -translate-x-1/2 rounded-full bg-sky/40 blur-3xl" />
 
-      <ol className="mt-6 grid gap-3 sm:grid-cols-3">
-        {STEPS.map((s, i) => (
-          <li key={s.title} className="rounded-2xl bg-white p-4 text-center shadow-sm ring-1 ring-zinc-200">
-            <p className="text-2xl">{s.icon}</p>
-            <p className="mt-1 font-semibold">{i + 1}. {s.title}</p>
-            <p className="text-sm text-zinc-500">{s.text}</p>
-          </li>
-        ))}
-      </ol>
+        <div className="relative mx-auto grid w-full max-w-5xl items-center gap-12 px-5 pb-16 pt-14 md:grid-cols-[1.15fr_1fr] md:pt-20">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-navy/70">AI humor for Morningside Heights</p>
+            <h1 className="mt-4 font-display text-6xl leading-[0.95] text-ink md:text-7xl">
+              Columbia,<br />
+              <span className="italic text-navy">but funnier.</span>
+            </h1>
+            <p className="mt-5 max-w-md text-lg text-ink/65">
+              Name a campus moment. Get AI captions you’ll actually laugh at. Vote for the best and keep your favorites.
+            </p>
 
-      <section className="mt-8">
-        <h2 className="mb-3 text-xl font-bold">Make some captions</h2>
-        {user ? (
-          <GenerateForm />
-        ) : (
-          <div className="rounded-2xl bg-white p-6 text-center shadow-sm ring-1 ring-zinc-200">
-            <p className="text-zinc-600">Sign in with your Columbia or Barnard Google account to make captions and vote.</p>
-            <div className="mt-4 flex justify-center gap-3">
-              <Link href="/login" className="rounded-full bg-blue-600 px-5 py-2 font-medium text-white hover:bg-blue-700">
-                Sign in
-              </Link>
-              <Link href="/jokes" className="rounded-full px-5 py-2 font-medium text-blue-700 ring-1 ring-blue-200 hover:bg-blue-50">
-                Just browse
-              </Link>
+            <div className="mt-8">
+              {user ? (
+                <GenerateForm />
+              ) : (
+                <div className="flex flex-wrap items-center gap-3">
+                  <Link href="/login" className="rounded-full bg-ink px-6 py-3 font-medium text-paper hover:bg-navy">
+                    Sign in to start
+                  </Link>
+                  <Link href="/jokes" className="rounded-full px-6 py-3 font-medium text-ink ring-1 ring-ink/15 hover:bg-white">
+                    Browse jokes →
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
-        )}
+
+          {/* Illustration of a caption card */}
+          <div className="relative mx-auto hidden h-80 w-full max-w-sm md:block" aria-hidden>
+            <div className="absolute inset-x-6 top-6 rotate-[5deg] rounded-3xl bg-navy p-6 text-paper shadow-xl">
+              <p className="font-display text-2xl italic leading-snug">“Butler at 3am is just a sleepover where everyone is crying quietly.”</p>
+            </div>
+            <div className="absolute inset-x-0 top-24 -rotate-[3deg] rounded-3xl bg-white p-6 shadow-2xl ring-1 ring-line">
+              <p className="font-display text-2xl leading-snug text-ink">
+                “The 1 train skipping 116th is the MTA’s way of saying class is optional.”
+              </p>
+              <div className="mt-5 flex items-center justify-between text-sm">
+                <span className="rounded-full bg-mist px-3 py-1 text-navy">The 1 train</span>
+                <span className="flex items-center gap-3 text-ink/50">
+                  <span className="font-semibold text-navy">▲ 24</span>
+                  <span className="text-xl text-gold">★</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
-      {top.length > 0 && (
-        <section className="mt-8">
-          <div className="mb-3 flex items-baseline justify-between">
-            <h2 className="text-xl font-bold">Top right now</h2>
-            <Link href="/jokes" className="text-sm font-medium text-blue-700 hover:underline">See all jokes →</Link>
-          </div>
-          <ul className="flex flex-col gap-3">
-            {top.map((c, i) => (
-              <li key={c.id} className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-zinc-200">
-                <p className="leading-snug"><span className="mr-1">{['🥇', '🥈', '🥉'][i]}</span>{c.content}</p>
-                <p className="mt-1 text-xs text-zinc-500">{c.topic}</p>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-    </div>
+      <section className="border-t border-line bg-white/60">
+        <ol className="mx-auto grid w-full max-w-5xl gap-8 px-5 py-12 sm:grid-cols-3">
+          {STEPS.map((s) => (
+            <li key={s.n}>
+              <p className="font-display text-4xl italic text-sky">{s.n}</p>
+              <p className="mt-2 font-semibold text-ink">{s.title}</p>
+              <p className="text-sm text-ink/60">{s.text}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+    </main>
   );
 }

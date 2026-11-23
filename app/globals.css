@@ -1,17 +1,35 @@
 @import "tailwindcss";
 
+/* One palette for every page: Columbia navy and blue on warm paper, gold for stars. */
 @theme inline {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-instrument-serif);
+
+  --color-paper: #f7f4ee;
+  --color-ink: #0e1b2e;
+  --color-navy: #1d3557;
+  --color-sky: #9cc3e6;
+  --color-mist: #e6eef7;
+  --color-gold: #d4a017;
+  --color-line: #e4ded3;
 }
 
-/* One light theme everywhere: the components are designed for it, and a dark page
-   behind light cards looked broken for users in dark mode. */
+/* Light only: the design is built for it, and a dark page behind light cards looked broken. */
 :root {
   color-scheme: light;
 }
 
 body {
-  background: #fafafa;
-  color: #18181b;
+  background: var(--color-paper);
+  color: var(--color-ink);
+}
+
+/* Popup for freshly generated captions. */
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+.animate-pop-in {
+  animation: pop-in 220ms ease-out;
 }
