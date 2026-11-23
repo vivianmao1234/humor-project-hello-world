@@ -18,8 +18,10 @@ type MixRow = { caption_count: number; humor_flavors: { id: number; slug: string
 
 export type GeneratedCaption = { id: number; content: string; flavor: string };
 
-// Two tries per step keeps the worst-case wait short when Gemini is busy.
-const MAX_MODEL_ATTEMPTS_PER_STEP = 2;
+// Tried after the database's models when Gemini is overloaded; they often have spare capacity.
+const BACKUP_MODELS = ['gemini-3.5-flash', 'gemini-flash-lite-latest', 'gemini-3-flash-preview'];
+// Stop starting new LLM calls after this long, so the request finishes before Vercel's limit.
+const REQUEST_BUDGET_MS = 90_000;
 
 function fill(template: string, vars: Record<string, string>) {
   return template.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] ?? '');
@@ -62,10 +64,13 @@ export async function runCaptionRequest(
     const termsText = (terms ?? []).map((t) => `- ${t.term}: ${t.definition}`).join('\n') || '(none)';
     const activeModels = (models ?? []) as Model[];
 
+    // Models that said "busy" are skipped for the rest of this request, across all flavors.
+    const ctx: RunContext = { busy: new Set(), deadline: Date.now() + REQUEST_BUDGET_MS };
+
     // Flavors run in parallel; steps within a flavor run in order.
     const results = await Promise.all(
       flavors.map((m) =>
-        runFlavor(supabase, requestId, userId, topic, m.humor_flavors!, m.caption_count, termsText, activeModels)
+        runFlavor(supabase, requestId, userId, topic, m.humor_flavors!, m.caption_count, termsText, activeModels, ctx)
       )
     );
     const captions = results.flat();
@@ -85,6 +90,8 @@ export async function runCaptionRequest(
   }
 }
 
+type RunContext = { busy: Set<string>; deadline: number };
+
 async function runFlavor(
   supabase: SupabaseClient,
   requestId: number,
@@ -93,7 +100,8 @@ async function runFlavor(
   flavor: { id: number; slug: string },
   count: number,
   termsText: string,
-  activeModels: Model[]
+  activeModels: Model[],
+  ctx: RunContext
 ): Promise<GeneratedCaption[]> {
   const [{ data: chain }, { data: steps }, { data: examples }] = await Promise.all([
     supabase
@@ -131,16 +139,19 @@ async function runFlavor(
       previous_output: previousOutput,
     });
 
-    // The step's own model first, then other active models as fallbacks.
+    // The step's own model first, then other active models, then backups.
     const preferred = step.llm_models?.is_active ? [step.llm_models] : [];
-    const candidates = [...preferred, ...activeModels.filter((m) => m.id !== step.llm_models?.id)].slice(
-      0,
-      MAX_MODEL_ATTEMPTS_PER_STEP
-    );
+    const fromDb = [...preferred, ...activeModels.filter((m) => m.id !== step.llm_models?.id)];
+    const candidates: { id: number | null; api_model_id: string }[] = [
+      ...fromDb,
+      ...BACKUP_MODELS.filter((name) => !fromDb.some((m) => m.api_model_id === name)).map((name) => ({ id: null, api_model_id: name })),
+    ].filter((m) => !ctx.busy.has(m.api_model_id));
 
     let output: string | null = null;
     for (const model of candidates) {
+      if (Date.now() > ctx.deadline) break;
       const call = await callGemini(model.api_model_id, prompt, { temperature: Number(step.temperature), json: isLast });
+      if (call.status === 503 || call.status === 429 || call.status === 404) ctx.busy.add(model.api_model_id);
       await supabase.from('llm_model_responses').insert({
         caption_request_id: requestId,
         llm_prompt_chain_id: chainId,
