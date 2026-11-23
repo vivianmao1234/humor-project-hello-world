@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
+import { createClient } from '@/lib/supabase/server';
 import LoginButton from './login-button';
 
 const ERRORS: Record<string, string> = {
@@ -10,6 +12,11 @@ const ERRORS: Record<string, string> = {
 export default async function LoginPage({ searchParams }: PageProps<'/login'>) {
   const { error } = await searchParams;
   const message = typeof error === 'string' ? ERRORS[error] : undefined;
+
+  // Already signed in: nothing to do here.
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) redirect('/');
 
   return (
     <main className="flex flex-1 items-center justify-center px-5 py-12">

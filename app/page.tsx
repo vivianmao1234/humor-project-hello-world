@@ -8,7 +8,7 @@ export const maxDuration = 120;
 const STYLES = [
   {
     name: 'Campus observational',
-    text: 'Hyper-specific takes on Butler, John Jay, the 1 train and the Core. Brainstormed, drafted ten ways, then an AI editor keeps only the best.',
+    text: 'Hyper-specific takes on Butler, John Jay, the 1 train and the Core. The AI drafts ten jokes, then keeps only the funniest.',
     sample: 'Eating three consecutive meals at John Jay qualifies you for diplomatic immunity.',
   },
   {

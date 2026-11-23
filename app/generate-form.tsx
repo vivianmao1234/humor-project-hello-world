@@ -13,7 +13,7 @@ const IDEAS = [
 ];
 
 // Shown in turn while the prompt chain runs, so the wait feels like progress.
-const STAGES = ['Brainstorming what’s relatable…', 'Writing captions…', 'Picking the funniest ones…'];
+const STAGES = ['Writing ten jokes…', 'Keeping only the funniest…'];
 
 export default function GenerateForm() {
   const [state, formAction, pending] = useActionState<GenerateState, FormData>(generateAction, {});
@@ -23,7 +23,7 @@ export default function GenerateForm() {
 
   useEffect(() => {
     if (!pending) return;
-    const timer = setInterval(() => setStage((s) => Math.min(s + 1, STAGES.length - 1)), 4000);
+    const timer = setInterval(() => setStage((s) => Math.min(s + 1, STAGES.length - 1)), 2500);
     return () => {
       clearInterval(timer);
       setStage(0);

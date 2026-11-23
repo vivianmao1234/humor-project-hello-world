@@ -4,7 +4,9 @@ import { createClient } from '@/lib/supabase/server';
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
-  const next = searchParams.get('next') ?? '/profile';
+  // Land on the home page (or a safe same-site path) after signing in.
+  const requested = searchParams.get('next');
+  const next = requested?.startsWith('/') && !requested.startsWith('//') ? requested : '/';
 
   if (code) {
     const supabase = await createClient();

@@ -12,7 +12,7 @@ export type LlmCall = {
 export async function callGemini(
   model: string,
   prompt: string,
-  { temperature = 1, json = false }: { temperature?: number; json?: boolean } = {}
+  { temperature = 1, json = false, signal }: { temperature?: number; json?: boolean; signal?: AbortSignal } = {}
 ): Promise<LlmCall> {
   const apiKey = process.env.GEMINI_API_KEY;
   const started = Date.now();
@@ -32,7 +32,8 @@ export async function callGemini(
         },
       }),
       // The free tier sometimes hangs under load; give up and let the caller try another model.
-      signal: AbortSignal.timeout(10_000),
+      // The caller can also cancel once a different model has already answered.
+      signal: signal ? AbortSignal.any([AbortSignal.timeout(20_000), signal]) : AbortSignal.timeout(20_000),
     });
     const durationMs = Date.now() - started;
 
@@ -50,7 +51,7 @@ export async function callGemini(
       ok: false,
       status: null,
       text: null,
-      error: err.name === 'TimeoutError' ? 'Timed out after 10s' : err.message,
+      error: err.name === 'TimeoutError' ? 'Timed out after 20s' : signal?.aborted ? 'Cancelled: another model answered first' : err.message,
       durationMs: Date.now() - started,
     };
   }

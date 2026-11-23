@@ -4,7 +4,7 @@
 // Everything is written as the signed-in user, so RLS applies.
 
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { callGemini } from './gemini';
+import { callGemini, type LlmCall } from './gemini';
 
 type Model = { id: number; api_model_id: string; is_active: boolean };
 type Step = {
@@ -22,6 +22,8 @@ export type GeneratedCaption = { id: number; content: string; flavor: string };
 const BACKUP_MODELS = ['gemini-3.5-flash', 'gemini-flash-lite-latest', 'gemini-3-flash-preview'];
 // Stop starting new LLM calls after this long, so the request finishes before Vercel's limit.
 const REQUEST_BUDGET_MS = 90_000;
+// How many models to ask at the same time for each step.
+const RACE_WIDTH = 3;
 
 function fill(template: string, vars: Record<string, string>) {
   return template.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] ?? '');
@@ -128,6 +130,8 @@ async function runFlavor(
   let previousOutput = '';
   let finalPrompt = '';
   let finalModel = '';
+  // Audit-log writes run in the background and are awaited before returning.
+  const logs: PromiseLike<unknown>[] = [];
 
   for (const [i, step] of orderedSteps.entries()) {
     const isLast = i === orderedSteps.length - 1;
@@ -147,33 +151,42 @@ async function runFlavor(
       ...BACKUP_MODELS.filter((name) => !fromDb.some((m) => m.api_model_id === name)).map((name) => ({ id: null, api_model_id: name })),
     ].filter((m) => !ctx.busy.has(m.api_model_id));
 
+    // Ask a few models at once and keep whichever answers first; cancel the rest.
     let output: string | null = null;
-    for (const model of candidates) {
-      if (Date.now() > ctx.deadline) break;
-      const call = await callGemini(model.api_model_id, prompt, { temperature: Number(step.temperature), json: isLast });
-      if (call.status === 503 || call.status === 429 || call.status === 404) ctx.busy.add(model.api_model_id);
-      await supabase.from('llm_model_responses').insert({
-        caption_request_id: requestId,
-        llm_prompt_chain_id: chainId,
-        humor_flavor_step_id: step.id,
-        llm_model_id: model.id,
-        model_name: model.api_model_id,
-        prompt,
-        response: call.text,
-        status_code: call.status,
-        error: call.error,
-        duration_ms: call.durationMs,
+    for (let i = 0; i < candidates.length && output === null && Date.now() < ctx.deadline; i += RACE_WIDTH) {
+      const wave = candidates.slice(i, i + RACE_WIDTH).filter((m) => !ctx.busy.has(m.api_model_id));
+      if (wave.length === 0) continue;
+      const winner = await raceModels(wave, prompt, { temperature: Number(step.temperature), json: isLast }, (model, call) => {
+        if (call.status === 503 || call.status === 429 || call.status === 404) ctx.busy.add(model.api_model_id);
+        logs.push(
+          supabase.from('llm_model_responses').insert({
+            caption_request_id: requestId,
+            llm_prompt_chain_id: chainId,
+            humor_flavor_step_id: step.id,
+            llm_model_id: model.id,
+            model_name: model.api_model_id,
+            prompt,
+            response: call.text,
+            status_code: call.status,
+            error: call.error,
+            duration_ms: call.durationMs,
+          })
+        );
       });
-      if (call.ok && call.text) {
-        output = call.text;
-        finalModel = model.api_model_id;
-        break;
+      if (winner) {
+        output = winner.text;
+        finalModel = winner.model;
       }
     }
-    if (output === null) return []; // this flavor failed; others may still succeed
+    if (output === null) {
+      await Promise.all(logs);
+      return []; // this flavor failed; others may still succeed
+    }
     previousOutput = output;
     finalPrompt = prompt;
   }
+
+  await Promise.all(logs);
 
   let contents: string[];
   try {
@@ -197,4 +210,31 @@ async function runFlavor(
   ).select('id, content');
   if (error) throw new Error(`Couldn’t save captions: ${error.message}`);
   return (saved ?? []).map((c) => ({ id: c.id, content: c.content, flavor: flavor.slug }));
+}
+
+type Candidate = { id: number | null; api_model_id: string };
+
+// Calls every model in parallel. Resolves with the first successful answer (and cancels the
+// others), or null once all have failed. onDone sees every call that wasn't cancelled.
+function raceModels(
+  models: Candidate[],
+  prompt: string,
+  opts: { temperature: number; json: boolean },
+  onDone: (model: Candidate, call: LlmCall) => void
+): Promise<{ text: string; model: string } | null> {
+  const controller = new AbortController();
+  let pending = models.length;
+  return new Promise((resolve) => {
+    for (const model of models) {
+      callGemini(model.api_model_id, prompt, { ...opts, signal: controller.signal }).then((call) => {
+        if (!(controller.signal.aborted && !call.ok)) onDone(model, call);
+        if (call.ok && call.text && !controller.signal.aborted) {
+          controller.abort();
+          resolve({ text: call.text, model: model.api_model_id });
+        } else if (--pending === 0) {
+          resolve(null);
+        }
+      });
+    }
+  });
 }
